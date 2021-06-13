@@ -16,12 +16,14 @@ import android.os.HandlerThread;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 
 import java.util.ArrayList;
 
 import tl.betapp.BaseFragment;
 import tl.betapp.R;
 import tl.betapp.databinding.FragmentHomeBinding;
+import tl.betapp.view.adaptor.FavSportListAdapter;
 import tl.betapp.view.adaptor.SportListAdapter;
 import tl.betapp.view.model.SportModel;
 import tl.betapp.view.model.SportModelRoom;
@@ -33,7 +35,9 @@ public class HomeFragment extends BaseFragment {
       FragmentHomeBinding binding;
     private FragmentActivity mActivity;
     private SportListAdapter sportListAdapter;
+    private FavSportListAdapter favSportListAdapter;
     UserDatabase  userDatabase;
+    private ArrayList<SportModelRoom> favList = new ArrayList<>();
     private ArrayList<SportModel> arrayList= new ArrayList<>();
 
     public static HomeFragment getInstance(MainLayout headerLayout, boolean backBtn) {
@@ -69,6 +73,24 @@ public class HomeFragment extends BaseFragment {
         final LinearLayoutManager manager = new LinearLayoutManager(mActivity);
         binding.sportRecyclerview.setLayoutManager(manager);
 
+        final LinearLayoutManager linearLayoutManager=new
+                LinearLayoutManager(mActivity,LinearLayoutManager.HORIZONTAL, true);
+        binding.teamRecyclerView.setLayoutManager(linearLayoutManager);
+
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                if (userDatabase.userDao().getList().size()>0)
+                {
+                    binding.llFavLeague.setVisibility(View.VISIBLE);
+                    binding.sportCatTV.setText("Favorite sports(s)?");
+                    binding.sportRecyclerview.setVisibility(View.GONE);
+
+                }
+            }
+        });
+
+
         sportListAdapter = new SportListAdapter(mActivity, new SportListAdapter.AdapterCallBack() {
             @Override
             public void itemClickListener(SportModel model, Boolean type,int pos) {
@@ -80,12 +102,9 @@ public class HomeFragment extends BaseFragment {
                                   arrayList.set(pos,model);
                                   logConfig.printP("List Status",""+getList().get(pos).getStatus());
                                   logConfig.printP("List Status  arrayList",""+arrayList.get(pos).getStatus());
-
-
                       }
                       else
                       {
-
                           model.setStatus(false);
                           getList().set(pos,model);
                           arrayList.set(pos,model);
@@ -93,13 +112,11 @@ public class HomeFragment extends BaseFragment {
                           logConfig.printP(" Elese " + "List Status",""+getList().get(pos).getStatus());
                           logConfig.printP(" arrayList " + "List Status",""+arrayList.get(pos).getStatus());
                       }
-
             }
         });
         binding.sportRecyclerview.setAdapter(sportListAdapter);
         arrayList.addAll(getList());
         sportListAdapter.setList(getList());
-
           binding.doneBtn.setOnClickListener(new View.OnClickListener() {
               @Override
               public void onClick(View v) {
@@ -121,20 +138,26 @@ public class HomeFragment extends BaseFragment {
                           }
                       }
                   });
+
               }
           });
 
-          AsyncTask.execute(new Runnable() {
-              @Override
-              public void run() {
-                  logConfig.printP("Room List",""+userDatabase.userDao().getList().size());
-              }
-          });
-    }
 
-    private void saveData(SportModel model) {
+        favSportListAdapter = new FavSportListAdapter(mActivity, new FavSportListAdapter.AdapterCallBack() {
+            @Override
+            public void itemClickListener(SportModelRoom model, Boolean type, int pos) {
 
+            }
+        });
 
+        binding.teamRecyclerView.setAdapter(favSportListAdapter);
+
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                favSportListAdapter.setList(userDatabase.userDao().getList());
+            }
+        });
 
     }
 }

@@ -15,6 +15,8 @@ public interface UserDao {
 
 
     @Query("Select * from sportModel")
+
+
     List<SportModelRoom> getList();
 
 
